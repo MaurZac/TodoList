@@ -7,16 +7,18 @@
 
 import UIKit
 import CoreData
+import RealmSwift
 
 class TableViewController: UITableViewController, UIPickerViewDelegate, UIImagePickerControllerDelegate {
-    var itemArray = [Item]()
+    var itemArray: Results<Item>?
+    let realm = try! Realm()
+    
     var selectedCategory: Category? {
         didSet {
             loadItems()
         }
     }
 
-    let context  = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     override func viewDidLoad() {
         super.viewDidLoad()
         loadItems()
@@ -26,33 +28,36 @@ class TableViewController: UITableViewController, UIPickerViewDelegate, UIImageP
 //MARK - table
     
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return itemArray.count
+        return itemArray?.count ?? 1
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "ToDoItemCell", for: indexPath)
         
-        cell.textLabel?.text = itemArray[indexPath.row].title
-        let item = itemArray[indexPath.row]
-        cell.accessoryType = item.done
-            == true ? .checkmark : .none
+        
+        if let item = itemArray?[indexPath.row]{
+            cell.textLabel?.text = itemArray![indexPath.row].title
+            cell.accessoryType = item.done ? .checkmark : .none
+        }else{
+            cell.textLabel?.text = "No items added"
+        }
+       
         return cell
     }
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         
-        
-//        context.delete(itemArray[indexPath.row])
-//        itemArray.remove(at: indexPath.row)
-        itemArray[indexPath.row].done = !itemArray[indexPath.row].done
-
-        //tableView.reloadData()
-//        if tableView.cellForRow(at: indexPath)?.accessoryType == .checkmark {
-//            tableView.cellForRow(at: indexPath)?.accessoryType = .none
-//        }else{
-//            tableView.cellForRow(at: indexPath)?.accessoryType = .checkmark
-//        }
-        saveItems()
+        if let item =  itemArray?[indexPath.row]{
+            do {
+                try realm.write{
+                    realm.delete(item)
+//                    item.done = !item.done
+                }
+            } catch  {
+                print("error:\(error)")
+            }
+        }
+        tableView.reloadData()
         tableView.deselectRow(at: indexPath, animated: true)
     }
     
@@ -61,14 +66,18 @@ class TableViewController: UITableViewController, UIPickerViewDelegate, UIImageP
         let alert = UIAlertController(title: "Add new task ", message: "", preferredStyle: .alert)
         let action = UIAlertAction(title: "add Item", style: .default) { (action) in
             //what happens after click add btn
-            
-            let newItem = Item(context: self.context)
-            newItem.title = textfield.text!
-            newItem.done = false
-            newItem.parentCategory = self.selectedCategory
-            self.itemArray.append(newItem)
-            self.saveItems()
-
+            if let currentCategory = self.selectedCategory{
+                do{
+                    try self.realm.write {
+                        let newItem = Item()
+                        newItem.title = textfield.text!
+                        currentCategory.items.append(newItem)
+                    }
+                }catch{
+                    print("error adding new task \(error)")
+                }
+            }
+            self.tableView.reloadData()
         }
         alert.addTextField { (alertTextfield) in
             alertTextfield.placeholder = "add new task"
@@ -78,41 +87,19 @@ class TableViewController: UITableViewController, UIPickerViewDelegate, UIImageP
         present(alert, animated: true, completion: nil)
     }
     
-    func saveItems(){
-        do{
-            try context.save()
-        }catch{
-            print("error saving context \(error)")
-        }
-        self.tableView.reloadData()
-    }
-    
-    func loadItems(request: NSFetchRequest<Item> =  Item.fetchRequest(), predicate: NSPredicate? = nil){
+    func loadItems(){
         
-        let categoryPredicate  = NSPredicate(format: "parentCategory.name MATCHES %@", selectedCategory!.name!)
-
-        if let addOptionalpredicate = predicate{
-            request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [categoryPredicate, addOptionalpredicate])
-        }else{
-            request.predicate = categoryPredicate
-            }
-        do{
-           itemArray = try context.fetch(request)
-        }catch{
-            print("error fetching data \(error)")
-        }
+        itemArray = selectedCategory?.items.sorted(byKeyPath: "title", ascending: true)
         tableView.reloadData()
-//        let request: NSFetchRequest<Item> = Item.fetchRequest()
-        
     }
 }
 
 extension TableViewController: UISearchBarDelegate{
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
-        let requestNS: NSFetchRequest<Item> = Item.fetchRequest()
+//        let requestNS: NSFetchRequest<Item> = Item.fetchRequest()
         let predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
         let sortDescriptr = [NSSortDescriptor(key: "title", ascending: true)]
-        loadItems(request: requestNS, predicate: predicate)
+        loadItems()
     }
     
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
