@@ -71,6 +71,7 @@ class TableViewController: UITableViewController, UIPickerViewDelegate, UIImageP
                     try self.realm.write {
                         let newItem = Item()
                         newItem.title = textfield.text!
+                        newItem.dateCreated = Date()
                         currentCategory.items.append(newItem)
                     }
                 }catch{
@@ -96,10 +97,8 @@ class TableViewController: UITableViewController, UIPickerViewDelegate, UIImageP
 
 extension TableViewController: UISearchBarDelegate{
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
-//        let requestNS: NSFetchRequest<Item> = Item.fetchRequest()
-        let predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
-        let sortDescriptr = [NSSortDescriptor(key: "title", ascending: true)]
-        loadItems()
+        itemArray = itemArray?.filter("title CONTAINS[cd] %@", searchBar.text!).sorted(byKeyPath: "dateCreated", ascending: true)
+        tableView.reloadData()
     }
     
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
