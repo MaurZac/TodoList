@@ -8,11 +8,17 @@
 import UIKit
 import CoreData
 import RealmSwift
+import ChameleonFramework
 
 class TableViewController: SwipeTableViewController, UIPickerViewDelegate, UIImagePickerControllerDelegate {
+    
+    
+    
+    
     var itemArray: Results<Item>?
     let realm = try! Realm()
     
+    @IBOutlet weak var searchBar: UISearchBar!
     var selectedCategory: Category? {
         didSet {
             loadItems()
@@ -22,9 +28,27 @@ class TableViewController: SwipeTableViewController, UIPickerViewDelegate, UIIma
     override func viewDidLoad() {
         super.viewDidLoad()
         tableView.rowHeight = 85.0
+        
+        searchBar.searchTextField.backgroundColor = FlatWhite()
+        
+        tableView.separatorStyle = .none
         loadItems()
 //        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
         }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        if let colorHex = selectedCategory?.color{
+            title = selectedCategory?.categoryName
+            guard let navBar = navigationController?.navigationBar else {fatalError("Navigation controller does not exist")}
+            navigationController?.navigationBar.barTintColor = UIColor(hexString: colorHex)
+            if let navBarColor = UIColor(hexString: colorHex){
+                navBar.barTintColor = navBarColor
+                navBar.tintColor = ContrastColorOf(navBarColor, returnFlat: true)
+                searchBar.barTintColor = navBarColor
+                navBar.largeTitleTextAttributes = [NSAttributedString.Key.foregroundColor: ContrastColorOf(navBarColor, returnFlat: true)]
+            }
+        }
+    }
         // Do any additional setup after loading the view.
 //MARK - table
     
@@ -36,6 +60,12 @@ class TableViewController: SwipeTableViewController, UIPickerViewDelegate, UIIma
         let cell = super.tableView(tableView, cellForRowAt: indexPath)
         if let item = itemArray?[indexPath.row]{
             cell.textLabel?.text = itemArray![indexPath.row].title
+            
+            if let colour  = UIColor(hexString: selectedCategory!.color)?.darken(byPercentage: CGFloat(indexPath.row) / CGFloat(itemArray!.count)) {
+                cell.backgroundColor = colour
+                cell.textLabel?.textColor = ContrastColorOf(colour, returnFlat: true)
+            }
+            
             cell.accessoryType = item.done ? .checkmark : .none
         }else{
             cell.textLabel?.text = "No items added"

@@ -42,12 +42,14 @@
                     </tableView>
                     <navigationItem key="navigationItem" title="To Do List" id="bTC-jZ-x6e">
                         <barButtonItem key="rightBarButtonItem" systemItem="add" id="yzs-Qk-Mfg">
-                            <color key="tintColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                             <connections>
                                 <action selector="addNew:" destination="Y48-1z-e17" id="pKT-Bx-L1D"/>
                             </connections>
                         </barButtonItem>
                     </navigationItem>
+                    <connections>
+                        <outlet property="searchBar" destination="jdm-Je-o8H" id="FER-HQ-RYp"/>
+                    </connections>
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="30t-9m-APS" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>

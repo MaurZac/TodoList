@@ -21,6 +21,11 @@ class CategoryViewController: SwipeTableViewController {
         tableView.rowHeight = 85.0
     }
     
+    override func viewWillAppear(_ animated: Bool) {
+        guard let navBar = navigationController?.navigationBar else { fatalError("navigation controller not exist") }
+        navBar.backgroundColor = UIColor(hexString: "1D9BF6")
+    }
+    
 //    CREATE
     func saveCategory(category: Category) {
         do{
@@ -59,10 +64,13 @@ class CategoryViewController: SwipeTableViewController {
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = super.tableView(tableView, cellForRowAt: indexPath)
+        cell.textLabel?.text = category?[indexPath.row].categoryName ?? "No Categories added yet"
         
-        cell.textLabel?.text = category?[indexPath.row].categoryName ?? "No cat added yet"
-        cell.backgroundColor = UIColor(hexString: category?[indexPath.row].color ?? "1D9BF6")
-        
+        if let category = category?[indexPath.row] {
+            guard let categoryColour = UIColor(hexString: category.color) else {fatalError()}
+            cell.backgroundColor = categoryColour
+            cell.textLabel?.textColor = ContrastColorOf(categoryColour, returnFlat: true)
+        }
         return cell
     }
     
