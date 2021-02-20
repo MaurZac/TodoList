@@ -9,7 +9,7 @@ import UIKit
 import CoreData
 import RealmSwift
 
-class TableViewController: UITableViewController, UIPickerViewDelegate, UIImagePickerControllerDelegate {
+class TableViewController: SwipeTableViewController, UIPickerViewDelegate, UIImagePickerControllerDelegate {
     var itemArray: Results<Item>?
     let realm = try! Realm()
     
@@ -21,6 +21,7 @@ class TableViewController: UITableViewController, UIPickerViewDelegate, UIImageP
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        tableView.rowHeight = 85.0
         loadItems()
 //        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
         }
@@ -32,34 +33,43 @@ class TableViewController: UITableViewController, UIPickerViewDelegate, UIImageP
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "ToDoItemCell", for: indexPath)
-        
-        
+        let cell = super.tableView(tableView, cellForRowAt: indexPath)
         if let item = itemArray?[indexPath.row]{
             cell.textLabel?.text = itemArray![indexPath.row].title
             cell.accessoryType = item.done ? .checkmark : .none
         }else{
             cell.textLabel?.text = "No items added"
         }
-       
         return cell
     }
     
-    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        
-        if let item =  itemArray?[indexPath.row]{
-            do {
-                try realm.write{
-                    realm.delete(item)
-//                    item.done = !item.done
-                }
-            } catch  {
-                print("error:\(error)")
+    override func updatemodel(at indexPath: IndexPath) {
+        if let task = self.itemArray?[indexPath.row]{
+        do{
+            try self.realm.write {
+                self.realm.delete(task)
             }
         }
-        tableView.reloadData()
-        tableView.deselectRow(at: indexPath, animated: true)
+        catch{
+            print("Error \(error)")
+         }
+        }
     }
+    
+//    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+//
+//        if let item =  itemArray?[indexPath.row]{
+//            do {
+//                try realm.write{
+//                    realm.delete(item)
+//                }
+//            } catch  {
+//                print("error:\(error)")
+//            }
+//        }
+//        tableView.reloadData()
+//        tableView.deselectRow(at: indexPath, animated: true)
+//    }
     
     @IBAction func addNew(_ sender: UIBarButtonItem) {
         var textfield = UITextField()
@@ -89,7 +99,6 @@ class TableViewController: UITableViewController, UIPickerViewDelegate, UIImageP
     }
     
     func loadItems(){
-        
         itemArray = selectedCategory?.items.sorted(byKeyPath: "title", ascending: true)
         tableView.reloadData()
     }
