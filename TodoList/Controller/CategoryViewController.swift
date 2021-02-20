@@ -23,8 +23,9 @@ class CategoryViewController: SwipeTableViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         guard let navBar = navigationController?.navigationBar else { fatalError("navigation controller not exist") }
-        navBar.backgroundColor = UIColor(hexString: "1D9BF6")
+        navBar.barTintColor = UIColor(hexString: "#1D9BF6")
     }
+    
     
 //    CREATE
     func saveCategory(category: Category) {
@@ -35,7 +36,6 @@ class CategoryViewController: SwipeTableViewController {
         }catch{
            print("error saving category \(error)")
         }
-     
         self.tableView.reloadData()
     }
     
@@ -45,6 +45,7 @@ class CategoryViewController: SwipeTableViewController {
         category = realm.objects(Category.self)
         self.tableView.reloadData()
     }
+    
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return category?.count ?? 1
     }
